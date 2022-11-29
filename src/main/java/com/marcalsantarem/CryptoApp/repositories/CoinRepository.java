@@ -4,8 +4,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
@@ -16,76 +20,43 @@ import com.marcalsantarem.CryptoApp.entities.Coin;
 @EnableAutoConfiguration
 public class CoinRepository {
 	
-	private String insert = "insert into coin (name, price, quantity, datetime) values (?,?,?,?)";
+	@Autowired
+	private EntityManager entityManager;
 	
-	private String selectAll = "select name, sum(quantity) as quantity from coin group by name";
-	
-	private String selectByName = "select * from coin where name = ?";
-	
-	private String delete = "delete from coin where id = ?";
-	
-	private String update = "update coin set name = ?, price = ?, quantity = ? where id = ?";
-	
-	private JdbcTemplate jdbcTemplate;
-	
-	public CoinRepository(JdbcTemplate jdbcTemplate) {
-		this.jdbcTemplate = jdbcTemplate;
-	}
-	
+	@Transactional
 	public Coin insert(Coin coin) {
-		Object[] attr = new Object[] {
-				coin.getName(),
-				coin.getPrice(),
-				coin.getQuantity(),
-				coin.getDateTime()
-		};
-		jdbcTemplate.update(insert, attr);
+		entityManager.persist(coin);
 		return coin;
 	}
-	
+
+	@Transactional
 	public Coin update(Coin coin) {
-		Object[] attr = new Object[] {
-				coin.getName(),
-				coin.getPrice(),
-				coin.getQuantity(),
-				coin.getId()	
-		};
-		jdbcTemplate.update(update, attr);
+		entityManager.merge(coin);
 		return coin;
 	}
 	
 	public List<CoinTransactionDTO> getAll(){
-		return jdbcTemplate.query(selectAll, new RowMapper<CoinTransactionDTO>() {
-			@Override
-			public CoinTransactionDTO mapRow(ResultSet rs, int rowNum) throws SQLException {
-				CoinTransactionDTO coin = new CoinTransactionDTO();
-				coin.setName(rs.getString("name"));
-				coin.setQuantity(rs.getBigDecimal("quantity"));
-				return coin;
-			}
-		});
+		String jpql = "select new com.marcalsantarem.CryptoApp.dto.CoinTransactionDTO(c.name, sum(c.quantity)) from Coin c group by c.name";
+		TypedQuery<CoinTransactionDTO> query = entityManager.createQuery(jpql, CoinTransactionDTO.class);
+		return query.getResultList();
 	}
 	
 	public List<Coin> getByName(String name){
-		Object[] attr = new Object[] { 
-				name 
-		};
-		return jdbcTemplate.query(selectByName, new RowMapper<Coin>() {
-			@Override
-			public Coin mapRow(ResultSet rs, int rowNum) throws SQLException {
-				Coin coin = new Coin();
-				coin.setId(rs.getInt("id"));
-				coin.setName(rs.getString("name"));
-				coin.setPrice(rs.getBigDecimal("price"));
-				coin.setQuantity(rs.getBigDecimal("quantity"));
-				coin.setDateTime(rs.getTimestamp("datetime"));
-				return coin;
-			}
-		}, attr);
+		String jpql = "select c from Coin c where c.name like :name";
+		TypedQuery<Coin> query = entityManager.createQuery(jpql, Coin.class);
+		query.setParameter("name", "%" + name + "%");
+		return query.getResultList();
 	}
 	
-	public int remove(int id) {
-		return jdbcTemplate.update(delete, id);
-	}
+
+	@Transactional
+	public boolean remove(int id) {
+		Coin coin = entityManager.find(Coin.class, id);
+		if (!entityManager.contains(coin)) {
+			coin = entityManager.merge(coin);
+		}
+		entityManager.remove(coin);
+		return true;
+	} 
 
 }

@@ -31,7 +31,7 @@ public class CoinController {
 		Coin c1 = new Coin();
 		c1.setName("Bitcoin");
 		c1.setPrice(new BigDecimal(1000));
-		c1.setQuantity(new BigDecimal(0.0007));
+		c1.setQuantity(new BigDecimal(0.107));
 		post(c1);
 		
 
@@ -45,7 +45,7 @@ public class CoinController {
 		Coin c3 = new Coin();
 		c3.setName("Bitcoin");
 		c3.setPrice(new BigDecimal(1050));
-		c3.setQuantity(new BigDecimal(0.0010));
+		c3.setQuantity(new BigDecimal(0.110));
 		post(c3);
 	}
 	
@@ -82,7 +82,6 @@ public class CoinController {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-	
 	
 	@DeleteMapping(value="{id}")
 	public ResponseEntity delete(@PathVariable int id) {

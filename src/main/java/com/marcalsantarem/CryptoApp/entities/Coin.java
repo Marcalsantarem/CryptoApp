@@ -5,10 +5,20 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Objects;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "coin_tb")
 public class Coin implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 	private String name;
 	private BigDecimal price;
